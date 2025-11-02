@@ -1,0 +1,69 @@
+name: Node.js CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1 — Checkout repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2 — Set up Node.js version
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # Step 3 — Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4 — Run tests
+      - name: Run tests
+        run: npm test --if-present
+
+      # Step 5 — Build project
+      - name: Build project
+        run: npm run build
+
+      # Step 6 (Optional) — Upload build artifacts
+      - name: Upload build folder as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: build/
+
+  # Optional Deployment job
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      # Example: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
